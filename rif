@@ -1,0 +1,151 @@
+#!/bin/bash
+
+function furl {
+f2url=$(echo "$1" | sed 's:А:%d0%90:g;s:Б:%d0%91:g;s:В:%d0%92:g;s:Г:%d0%93:g;s:Д:%d0%94:g;s:Е:%d0%95:g;s:Ж:%d0%96:g;s:З:%d0%97:g;s:И:%d0%98:g;s:Й:%d0%99:g;s:К:%d0%9a:g;s:Л:%d0%9b:g;s:М:%d0%9c:g;s:Н:%d0%9d:g;s:О:%d0%9e:g;s:П:%d0%9f:g;s:Р:%d0%a0:g;s:С:%d0%a1:g;s:Т:%d0%a2:g;s:У:%d0%a3:g;s:Ф:%d0%a4:g;s:Х:%d0%a5:g;s:Ц:%d0%a6:g;s:Ч:%d0%a7:g;s:Ш:%d0%a8:g;s:Щ:%d0%a9:g;s:Ъ:%d0%aa:g;s:Ы:%d0%ab:g;s:Ь:%d0%ac:g;s:Э:%d0%ad:g;s:Ю:%d0%ae:g;s:Я:%d0%af:g;s:а:%d0%b0:g;s:б:%d0%b1:g;s:в:%d0%b2:g;s:г:%d0%b3:g;s:д:%d0%b4:g;s:е:%d0%b5:g;s:ж:%d0%b6:g;s:з:%d0%b7:g;s:и:%d0%b8:g;s:й:%d0%b9:g;s:к:%d0%ba:g;s:л:%d0%bb:g;s:м:%d0%bc:g;s:н:%d0%bd:g;s:о:%d0%be:g;s:п:%d0%bf:g;s:р:%d1%80:g;s:с:%d1%81:g;s:т:%d1%82:g;s:у:%d1%83:g;s:ф:%d1%84:g;s:х:%d1%85:g;s:ц:%d1%86:g;s:ч:%d1%87:g;s:ш:%d1%88:g;s:щ:%d1%89:g;s:ъ:%d1%8a:g;s:ы:%d1%8b:g;s:ь:%d1%8c:g;s:э:%d1%8d:g;s:ю:%d1%8e:g;s:я:%d1%8f:g;s:ё:%d1%91:g;s:Ё:%d0%81:g')
+}
+
+#######################FURL####################
+
+function getr {
+
+touch zapp
+
+chmod 777 zapp
+
+echo -n '#!/usr/bin/expect -f
+
+set timeout -1
+spawn openssl s_client -connect 185.53.169.109:443
+match_max 100000
+expect -exact "
+---\r
+"
+send -- "GET /rifma/' 1>zapp
+
+furl "$1"
+echo -n "$f2url" 1>> zapp
+
+
+echo -n '?mode=block&type=asn HTTP/1.1\rHost: rifmus.net\rAccept-Language: en-US,en;q=0.5\rX-Requested-With: XMLHttpRequest\rConnection: close"
+expect -exact "GET /rifma/' 1>> zapp
+
+echo -n "$f2url" 1>> zapp
+
+echo '?mode=block&type=asn HTTP/1.1\r
+Host: rifmus.net\r
+Accept-Language: en-US,en;q=0.5\r
+X-Requested-With: XMLHttpRequest\r
+Connection: close"
+send -- "\r"
+set results $expect_out(buffer)
+expect -exact "\r
+"
+send -- "\r"
+expect eof' 1>> zapp
+}
+
+################GETR################################
+
+function scr {
+    let deletefile=0
+    let quiet=1
+
+    while [ -n "$1" ]
+    do
+        case "$1" in
+            -d) deletefile=1 ;;
+            -q) quiet=0 ;;
+            -r) shift
+                break
+                ;;
+            *) echo "$1 is not an option"
+                ;;
+        esac
+        shift
+    done
+
+    word=$1
+    wget -q https://rifmus.net/rifma/$word
+    
+    touch 'tmp-file'
+    chmod 777 tmp-file
+
+    squa=${word:((${#word}-2)):2}
+
+    cat $word | grep '<li>' | sed -e "s%<li>%%" | sed -e "s%</li>%%" | sed -e "s/ //g" | sed -e "/^$/d" 1> tmp-file
+    
+    cat tmp-file | sed -e "/.$squa$/d" > $word
+    
+    chmod 777 $word
+    
+    getr "$word"
+    
+    ./zapp 1> gzun
+    
+    chmod 777 gzun
+    rm zapp
+
+    cat gzun | grep '<li>' | sed -e "s%<li>%%" | sed -e "s%</li>%%" | sed -e "s/ //g" | sed -e "/^$/d" 1> tmp-file
+    
+    cat tmp-file | sed -e "/.$squa$/d" 1>> $word
+
+    rm gzun
+    
+    rm tmp-file
+
+    if [ "$quiet" == 1 ]
+        then cat $word
+    fi
+
+    if [ "$deletefile" == 1 ]
+    then 
+        rm $word
+    fi
+}
+##########################SCR##########################
+
+if [ "$#" -eq 1 ]
+    then scr "-r" "$1"
+    elif [ "$#" -eq 2 ]
+        then
+
+###########
+
+word1=$1
+word2=$2
+scr "-q" "-r" "$word1" 
+scr "-q" "-r" "$word2" 
+
+echo "$word1" "$word2"
+
+let c1=$(wc -l $word1 | sed -e "s/$word1//")
+let c2=$(wc -l $word2 | sed -e "s/$word2//")
+
+let i=1
+
+echo "$c1" "$c2"
+
+while [ $i -le $c1 ]
+do
+    #echo "$i"    
+    let j=1    
+    a1=$(sed -n "${i}p" < $word1)    
+    while [ $j -le $c2 ]
+    do      
+        #echo "$j"        
+        a2=$(sed -n "${j}p" < $word2)
+        if [ $a1 == $a2 ]
+            then
+            echo "$a1"
+        fi
+        let j=$j+1
+    done    
+    let i=$i+1
+done
+
+rm $word1
+rm $word2
+
+#######
+
+fi
